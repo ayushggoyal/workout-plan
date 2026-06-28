@@ -227,6 +227,102 @@
     .day-pill .dp-type { display: none; }
     .profile-grid { grid-template-columns: 1fr; }
   }
+
+  /* ── Modal overlay ── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7); z-index: 100;
+    align-items: center; justify-content: center; padding: 16px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; width: 100%; max-width: 560px;
+    max-height: 90vh; overflow-y: auto; padding: 24px;
+    position: relative;
+  }
+  .modal-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 4px; }
+  .modal-sub   { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 20px; }
+  .modal-close {
+    position: absolute; top: 16px; right: 16px;
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text-dim); border-radius: 6px; padding: 2px 10px;
+    cursor: pointer; font-size: 1rem;
+  }
+  .modal-close:hover { color: var(--text); }
+
+  /* ── Form elements ── */
+  .form-group { margin-bottom: 14px; }
+  .form-label { font-size: 0.76rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--text-dim); margin-bottom: 5px; display: block; }
+  .form-input, .form-textarea, .form-select {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); padding: 9px 12px;
+    font-size: 0.86rem; font-family: inherit;
+  }
+  .form-input:focus, .form-textarea:focus, .form-select:focus {
+    outline: none; border-color: var(--person-color);
+  }
+  .form-textarea { resize: vertical; min-height: 70px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+  /* ── Exercise log table ── */
+  .ex-log-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-bottom: 14px; }
+  .ex-log-table th {
+    background: var(--surface2); color: var(--text-dim); font-size: 0.68rem;
+    text-transform: uppercase; letter-spacing: 0.05em; padding: 7px 8px;
+    text-align: left; border-bottom: 1px solid var(--border);
+  }
+  .ex-log-table td { padding: 6px 4px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .ex-log-table tr:last-child td { border-bottom: none; }
+  .ex-log-input {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 5px;
+    color: var(--text); padding: 4px 6px; width: 100%; font-size: 0.8rem;
+    font-family: inherit;
+  }
+  .ex-log-input:focus { outline: none; border-color: var(--person-color); }
+
+  /* ── Buttons ── */
+  .btn {
+    padding: 10px 20px; border-radius: 8px; font-size: 0.86rem;
+    font-weight: 600; cursor: pointer; border: none; transition: opacity 0.15s;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-primary { background: var(--person-color); color: #fff; }
+  .btn-ghost   { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-sm      { padding: 6px 14px; font-size: 0.8rem; }
+
+  /* ── Log button on workout card ── */
+  .log-btn-row { display: flex; gap: 10px; align-items: center; margin-top: 16px; border-top: 1px solid var(--border); padding-top: 14px; }
+  .log-status  { font-size: 0.78rem; color: var(--text-dim); }
+  .log-status.done { color: var(--accent3); }
+
+  /* ── History list ── */
+  .history-entry {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 14px; margin-bottom: 8px;
+  }
+  .history-date  { font-size: 0.72rem; color: var(--text-dim); margin-bottom: 4px; }
+  .history-title { font-size: 0.9rem; font-weight: 600; margin-bottom: 6px; }
+  .history-body  { font-size: 0.78rem; color: var(--text-dim); line-height: 1.6; white-space: pre-wrap; }
+  .history-link  { font-size: 0.72rem; color: var(--accent); text-decoration: none; }
+  .history-link:hover { text-decoration: underline; }
+
+  /* ── Settings icon ── */
+  .gear-btn {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 10px; cursor: pointer;
+    color: var(--text-dim); font-size: 1rem;
+  }
+  .gear-btn:hover { color: var(--text); border-color: var(--accent); }
+
+  /* ── PAT warning ── */
+  .pat-warning {
+    background: #2a1e0e; border: 1px solid #5a3e1a; border-radius: 8px;
+    padding: 10px 12px; font-size: 0.78rem; color: #ffd166; margin-bottom: 14px; line-height: 1.5;
+  }
 </style>
 </head>
 <body>
@@ -250,11 +346,62 @@
       <button onclick="changeWeek(-1)">◀</button>
       <button onclick="changeWeek(1)">▶</button>
     </div>
+    <button class="gear-btn" onclick="openSettings()" title="Settings">⚙️</button>
   </div>
 </div>
 
 <div class="day-strip" id="dayStrip"></div>
 <div id="workoutContent"></div>
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal">
+    <div class="modal-title">⚙️ Settings</div>
+    <div class="modal-sub">GitHub integration for workout logging</div>
+    <button class="modal-close" onclick="closeSettings()">✕</button>
+    <div class="pat-warning">
+      ⚠️ Your PAT is stored in browser localStorage only. Use a token scoped to <strong>this repo only</strong> with <strong>Issues: Read & Write</strong> permission.
+    </div>
+    <div class="form-group">
+      <label class="form-label">GitHub Repo (owner/name)</label>
+      <input class="form-input" id="settingsRepo" placeholder="ayushggoyal/workout-plan">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Personal Access Token</label>
+      <input class="form-input" id="settingsPat" type="password" placeholder="github_pat_...">
+    </div>
+    <div style="display:flex;gap:10px;margin-top:4px">
+      <button class="btn btn-primary" onclick="saveSettings()">Save</button>
+      <button class="btn btn-ghost"   onclick="testPat()">Test connection</button>
+    </div>
+    <div id="settingsMsg" style="font-size:0.8rem;margin-top:10px;color:var(--text-dim)"></div>
+  </div>
+</div>
+
+<!-- Log Workout Modal -->
+<div class="modal-overlay" id="logModal">
+  <div class="modal">
+    <div class="modal-title" id="logModalTitle">Log Workout</div>
+    <div class="modal-sub"   id="logModalSub"></div>
+    <button class="modal-close" onclick="closeLogModal()">✕</button>
+    <div id="logModalBody"></div>
+    <div style="display:flex;gap:10px;margin-top:16px">
+      <button class="btn btn-primary" id="logSubmitBtn" onclick="submitLog()">Save to GitHub</button>
+      <button class="btn btn-ghost"   onclick="closeLogModal()">Cancel</button>
+    </div>
+    <div id="logMsg" style="font-size:0.8rem;margin-top:10px;color:var(--text-dim)"></div>
+  </div>
+</div>
+
+<!-- History Modal -->
+<div class="modal-overlay" id="historyModal">
+  <div class="modal">
+    <div class="modal-title">📋 Workout History</div>
+    <div class="modal-sub" id="historyModalSub"></div>
+    <button class="modal-close" onclick="closeHistory()">✕</button>
+    <div id="historyBody"><div style="color:var(--text-dim);font-size:0.85rem">Loading...</div></div>
+  </div>
+</div>
 
 <script>
 // ─── DATA ────────────────────────────────────────────────────────────────────
@@ -708,6 +855,15 @@ function buildHTML(day, info, session, wk, profile) {
     h += collapsible('😴 Weekly Review', session.sleep);
   }
 
+  // Log button row
+  const logKey = loggedKey(day, currentWeek);
+  const isLogged = localStorage.getItem(logKey);
+  h += `<div class="log-btn-row">
+    <button class="btn btn-primary btn-sm" onclick="openLogModal('${day}')">✏️ Log Workout</button>
+    <button class="btn btn-ghost btn-sm"   onclick="openHistory('${day}')">📋 History</button>
+    <span class="log-status ${isLogged ? 'done' : ''}">${isLogged ? '✓ Logged' : ''}</span>
+  </div>`;
+
   h += `</div>`; // workout-card
   return h;
 }
@@ -751,6 +907,331 @@ function tog(id) {
 }
 
 init();
+
+// ─── GITHUB CONFIG ────────────────────────────────────────────────────────────
+function ghRepo() { return localStorage.getItem('gh_repo') || 'ayushggoyal/workout-plan'; }
+function ghPat()  { return localStorage.getItem('gh_pat')  || ''; }
+
+function loggedKey(day, week) { return `logged_${currentPerson}_w${week}_${day}`; }
+
+async function ghFetch(path, opts = {}) {
+  const res = await fetch(`https://api.github.com${path}`, {
+    ...opts,
+    headers: {
+      'Authorization': `Bearer ${ghPat()}`,
+      'Accept': 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+      ...(opts.headers || {}),
+    },
+  });
+  return res;
+}
+
+// ─── SETTINGS ────────────────────────────────────────────────────────────────
+function openSettings() {
+  document.getElementById('settingsRepo').value = ghRepo();
+  document.getElementById('settingsPat').value  = ghPat();
+  document.getElementById('settingsMsg').textContent = '';
+  document.getElementById('settingsModal').classList.add('open');
+}
+function closeSettings() { document.getElementById('settingsModal').classList.remove('open'); }
+
+function saveSettings() {
+  const repo = document.getElementById('settingsRepo').value.trim();
+  const pat  = document.getElementById('settingsPat').value.trim();
+  if (!repo || !pat) { document.getElementById('settingsMsg').textContent = 'Fill both fields.'; return; }
+  localStorage.setItem('gh_repo', repo);
+  localStorage.setItem('gh_pat', pat);
+  document.getElementById('settingsMsg').textContent = '✓ Saved.';
+}
+
+async function testPat() {
+  const msg = document.getElementById('settingsMsg');
+  msg.textContent = 'Testing…';
+  saveSettings();
+  try {
+    const res = await ghFetch(`/repos/${ghRepo()}`);
+    if (res.ok) {
+      msg.style.color = 'var(--accent3)';
+      msg.textContent = '✓ Connected to ' + ghRepo();
+    } else {
+      msg.style.color = 'var(--accent2)';
+      msg.textContent = '✗ Failed: ' + res.status + ' ' + res.statusText;
+    }
+  } catch(e) {
+    msg.style.color = 'var(--accent2)';
+    msg.textContent = '✗ Network error';
+  }
+}
+
+// ─── LOG MODAL ───────────────────────────────────────────────────────────────
+let _logDay = null;
+
+function openLogModal(day) {
+  if (!ghPat()) { openSettings(); return; }
+  _logDay = day;
+  const info    = WEEK_PLAN[day];
+  const session = SESSIONS[info.session];
+  const wk      = WEEKS[currentWeek - 1];
+  const profile = PROFILES[currentPerson];
+  const pData   = wk[currentPerson];
+
+  document.getElementById('logModalTitle').textContent = `✏️ Log — ${info.icon} ${session.title}`;
+  document.getElementById('logModalSub').textContent =
+    `${profile.name} · Week ${currentWeek} · ${dayPillDate(currentWeek, DAYS_LIST.indexOf(day))}`;
+  document.getElementById('logMsg').textContent = '';
+  document.getElementById('logSubmitBtn').disabled = false;
+
+  let body = '';
+
+  if (session.tag === 'strength') {
+    body += `<div class="form-group">
+      <label class="form-label">Overall RPE (1–10)</label>
+      <input class="form-input" id="log_rpe" type="number" min="1" max="10" placeholder="e.g. 7">
+    </div>`;
+    body += `<label class="form-label" style="margin-bottom:8px">Exercises (fill what you did)</label>`;
+    body += `<table class="ex-log-table"><thead><tr>
+      <th>Exercise</th><th>Planned</th><th>Weight (kg)</th><th>Reps Done</th>
+    </tr></thead><tbody>`;
+    session.exercises.forEach((ex, i) => {
+      body += `<tr>
+        <td style="font-weight:600;font-size:0.8rem">${ex.name}</td>
+        <td style="color:var(--text-dim)">${ex.sets}</td>
+        <td><input class="ex-log-input" id="log_w${i}" placeholder="—"></td>
+        <td><input class="ex-log-input" id="log_r${i}" placeholder="e.g. 8,8,7,7"></td>
+      </tr>`;
+    });
+    body += `</tbody></table>`;
+    if (session.core) {
+      body += `<label class="form-label" style="margin-bottom:8px">Core — done?</label>`;
+      body += `<div style="display:flex;gap:8px;align-items:center;margin-bottom:14px">
+        <input type="checkbox" id="log_core" style="width:16px;height:16px">
+        <label for="log_core" style="font-size:0.84rem;color:var(--text-dim)">Core finisher completed</label>
+      </div>`;
+    }
+  }
+
+  else if (session.tag === 'run') {
+    const planned = day === 'Wed' ? pData.easy : pData.long;
+    body += `<div style="font-size:0.78rem;color:var(--text-dim);margin-bottom:14px">
+      Planned: <strong style="color:var(--text)">${planned}</strong>
+    </div>`;
+    body += `<div class="form-row" style="margin-bottom:12px">
+      <div class="form-group">
+        <label class="form-label">Actual Distance (km)</label>
+        <input class="form-input" id="log_dist" type="number" step="0.1" placeholder="e.g. 8.2">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Time (mm:ss)</label>
+        <input class="form-input" id="log_time" placeholder="e.g. 52:30">
+      </div>
+    </div>
+    <div class="form-row-3" style="margin-bottom:12px">
+      <div class="form-group">
+        <label class="form-label">Avg HR (bpm)</label>
+        <input class="form-input" id="log_hr" type="number" placeholder="e.g. 148">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Avg Cadence (spm)</label>
+        <input class="form-input" id="log_cad" type="number" placeholder="e.g. 163">
+      </div>
+      <div class="form-group">
+        <label class="form-label">RPE (1–10)</label>
+        <input class="form-input" id="log_rpe" type="number" min="1" max="10" placeholder="e.g. 6">
+      </div>
+    </div>`;
+  }
+
+  else { // recovery
+    body += `<div class="form-group">
+      <label class="form-label">Activities completed</label>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px">
+        ${session.activities.map((a,i) => `
+          <label style="display:flex;gap:8px;align-items:flex-start;font-size:0.82rem;color:var(--text-dim)">
+            <input type="checkbox" id="log_act${i}" style="margin-top:2px;width:14px;height:14px">
+            ${a}
+          </label>`).join('')}
+      </div>
+    </div>`;
+  }
+
+  body += `<div class="form-group">
+    <label class="form-label">Notes / How it felt</label>
+    <textarea class="form-textarea" id="log_notes" placeholder="Anything notable…"></textarea>
+  </div>`;
+
+  document.getElementById('logModalBody').innerHTML = body;
+  document.getElementById('logModal').classList.add('open');
+}
+
+function closeLogModal() { document.getElementById('logModal').classList.remove('open'); }
+
+async function submitLog() {
+  const btn = document.getElementById('logSubmitBtn');
+  const msg = document.getElementById('logMsg');
+  btn.disabled = true;
+  msg.textContent = 'Saving…';
+  msg.style.color = 'var(--text-dim)';
+
+  const day     = _logDay;
+  const info    = WEEK_PLAN[day];
+  const session = SESSIONS[info.session];
+  const profile = PROFILES[currentPerson];
+  const dateStr = dayPillDate(currentWeek, DAYS_LIST.indexOf(day));
+  const wk      = WEEKS[currentWeek - 1];
+
+  // Build issue body
+  let issueBody = `## Workout Log\n\n`;
+  issueBody += `| | |\n|---|---|\n`;
+  issueBody += `| **Person** | ${profile.name} |\n`;
+  issueBody += `| **Date** | ${dateStr} |\n`;
+  issueBody += `| **Week** | ${currentWeek} of 16 (${wk.focus}) |\n`;
+  issueBody += `| **Session** | ${session.title} |\n\n`;
+
+  const notes = document.getElementById('log_notes')?.value?.trim();
+
+  if (session.tag === 'strength') {
+    const rpe = document.getElementById('log_rpe')?.value;
+    if (rpe) issueBody += `**Overall RPE:** ${rpe}/10\n\n`;
+    issueBody += `### Exercises\n\n| Exercise | Planned | Weight | Reps |\n|---|---|---|---|\n`;
+    session.exercises.forEach((ex, i) => {
+      const w = document.getElementById(`log_w${i}`)?.value || '—';
+      const r = document.getElementById(`log_r${i}`)?.value || '—';
+      issueBody += `| ${ex.name} | ${ex.sets} | ${w} kg | ${r} |\n`;
+    });
+    const coreDone = document.getElementById('log_core')?.checked;
+    if (session.core) issueBody += `\n**Core finisher:** ${coreDone ? '✓ Done' : '✗ Skipped'}\n`;
+  }
+
+  else if (session.tag === 'run') {
+    const dist = document.getElementById('log_dist')?.value;
+    const time = document.getElementById('log_time')?.value;
+    const hr   = document.getElementById('log_hr')?.value;
+    const cad  = document.getElementById('log_cad')?.value;
+    const rpe  = document.getElementById('log_rpe')?.value;
+    const planned = day === 'Wed' ? wk[currentPerson].easy : wk[currentPerson].long;
+    issueBody += `### Run Stats\n\n| Metric | Value |\n|---|---|\n`;
+    issueBody += `| Planned distance | ${planned} |\n`;
+    if (dist) issueBody += `| Actual distance | ${dist} km |\n`;
+    if (time) issueBody += `| Time | ${time} |\n`;
+    if (dist && time) {
+      // calc pace mm:ss/km
+      const parts = time.split(':');
+      const totalSec = parts.length === 2 ? parseInt(parts[0])*60+parseInt(parts[1]) : parseInt(parts[0])*3600+parseInt(parts[1])*60+parseInt(parts[2]);
+      const paceSec  = totalSec / parseFloat(dist);
+      const pm = Math.floor(paceSec/60), ps = Math.round(paceSec%60);
+      issueBody += `| Avg pace | ${pm}:${ps.toString().padStart(2,'0')} /km |\n`;
+    }
+    if (hr)  issueBody += `| Avg HR | ${hr} bpm |\n`;
+    if (cad) issueBody += `| Avg cadence | ${cad} spm |\n`;
+    if (rpe) issueBody += `| RPE | ${rpe}/10 |\n`;
+  }
+
+  else { // recovery
+    const checked = session.activities.map((a, i) =>
+      document.getElementById(`log_act${i}`)?.checked ? `✓ ${a}` : `✗ ${a}`
+    );
+    issueBody += `### Activities\n\n${checked.map(c => `- ${c}`).join('\n')}\n`;
+  }
+
+  if (notes) issueBody += `\n### Notes\n\n${notes}\n`;
+
+  const issueTitle = `[${dateStr}] ${profile.name} — ${session.title} (Week ${currentWeek})`;
+
+  try {
+    const res = await ghFetch(`/repos/${ghRepo()}/issues`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: issueTitle,
+        body: issueBody,
+        labels: ['workout-log', session.tag, `week-${currentWeek}`, currentPerson],
+      }),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      // Mark locally
+      localStorage.setItem(loggedKey(day, currentWeek), data.html_url);
+      msg.style.color = 'var(--accent3)';
+      msg.textContent = `✓ Logged! View on GitHub →`;
+      msg.innerHTML += ` <a href="${data.html_url}" target="_blank" style="color:var(--accent)">Issue #${data.number}</a>`;
+      btn.textContent = '✓ Done';
+      renderWorkout(); // refresh to show "Logged" badge
+    } else {
+      const err = await res.json();
+      msg.style.color = 'var(--accent2)';
+      msg.textContent = `✗ ${err.message || res.statusText}`;
+      btn.disabled = false;
+    }
+  } catch(e) {
+    msg.style.color = 'var(--accent2)';
+    msg.textContent = '✗ Network error';
+    btn.disabled = false;
+  }
+}
+
+// ─── HISTORY ─────────────────────────────────────────────────────────────────
+async function openHistory(day) {
+  const info    = WEEK_PLAN[day];
+  const session = SESSIONS[info.session];
+  document.getElementById('historyModalSub').textContent =
+    `${info.icon} ${session.title} — all logged entries`;
+  document.getElementById('historyBody').innerHTML =
+    `<div style="color:var(--text-dim);font-size:0.85rem">Loading…</div>`;
+  document.getElementById('historyModal').classList.add('open');
+
+  if (!ghPat()) {
+    document.getElementById('historyBody').innerHTML =
+      `<div style="color:var(--accent2);font-size:0.84rem">Set up GitHub in ⚙️ Settings first.</div>`;
+    return;
+  }
+
+  try {
+    const label = encodeURIComponent(session.tag);
+    const person = encodeURIComponent(currentPerson);
+    const res = await ghFetch(
+      `/repos/${ghRepo()}/issues?labels=workout-log,${label},${person}&state=open&per_page=30`
+    );
+    if (!res.ok) throw new Error(res.statusText);
+    const issues = await res.json();
+
+    // filter by session title in issue title
+    const filtered = issues.filter(i => i.title.includes(session.title));
+
+    if (!filtered.length) {
+      document.getElementById('historyBody').innerHTML =
+        `<div style="color:var(--text-dim);font-size:0.84rem">No logs yet for ${session.title}.</div>`;
+      return;
+    }
+
+    document.getElementById('historyBody').innerHTML = filtered.map(issue => `
+      <div class="history-entry">
+        <div class="history-date">${new Date(issue.created_at).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</div>
+        <div class="history-title">${issue.title}</div>
+        <div class="history-body">${mdTableToText(issue.body)}</div>
+        <a class="history-link" href="${issue.html_url}" target="_blank">View full log on GitHub →</a>
+      </div>
+    `).join('');
+  } catch(e) {
+    document.getElementById('historyBody').innerHTML =
+      `<div style="color:var(--accent2);font-size:0.84rem">Error: ${e.message}</div>`;
+  }
+}
+
+function closeHistory() { document.getElementById('historyModal').classList.remove('open'); }
+
+// Strip markdown tables for compact display
+function mdTableToText(md) {
+  if (!md) return '';
+  return md
+    .replace(/\|[-: ]+\|[-: |]+\n/g, '')   // separator rows
+    .replace(/\|/g, '')                      // pipes
+    .replace(/\*\*/g, '')                    // bold markers
+    .replace(/^#{1,3}\s+/gm, '')            // headings
+    .split('\n').filter(l => l.trim()).slice(0, 20).join('\n')
+    .trim();
+}
 </script>
 </body>
 </html>
