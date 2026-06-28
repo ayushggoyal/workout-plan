@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Workout Plan</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --accent: #6c8fff;
+    --accent2: #ff6b6b;
+    --accent3: #52d9a0;
+    --text: #e8eaf6;
+    --text-dim: #8b91b5;
+    --border: #2d3152;
+    --radius: 12px;
+    --person-color: #6c8fff;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    padding: 20px;
+    max-width: 860px;
+    margin: 0 auto;
+  }
+
+  /* ── Header ── */
+  .header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 { font-size: 1.4rem; font-weight: 700; }
+  .date-str { color: var(--text-dim); font-size: 0.82rem; margin-top: 2px; }
+
+  .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+  /* ── Person toggle ── */
+  .person-toggle {
+    display: flex;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .person-btn {
+    padding: 8px 18px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: var(--text-dim);
+    transition: all 0.15s;
+  }
+  .person-btn.active-ayush  { background: #1e2a5e; color: #6c8fff; }
+  .person-btn.active-ayushi { background: #2a1a3e; color: #c084fc; }
+
+  /* ── Week control ── */
+  .week-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 8px 14px;
+  }
+  .week-control label { font-size: 0.78rem; color: var(--text-dim); }
+  .week-control input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 4px 8px;
+    width: 48px;
+    font-size: 0.9rem;
+    text-align: center;
+  }
+  .week-nav { display: flex; gap: 6px; }
+  .week-nav button {
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text); border-radius: 6px;
+    padding: 4px 10px; cursor: pointer; font-size: 0.85rem;
+  }
+  .week-nav button:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── Day strip ── */
+  .day-strip {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .day-pill {
+    background: var(--surface);
+    border: 2px solid transparent;
+    border-radius: var(--radius);
+    padding: 10px 4px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .day-pill:hover { border-color: var(--border); }
+  .day-pill.active { border-color: var(--person-color); background: var(--surface2); }
+  .day-pill.today { box-shadow: 0 0 0 1px var(--accent3) inset; }
+  .day-pill .dp-icon { font-size: 1.1rem; }
+  .day-pill .dp-name { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); margin-top: 4px; }
+  .day-pill .dp-type { font-size: 0.68rem; font-weight: 600; margin-top: 3px; line-height: 1.2; color: var(--text-dim); }
+  .day-pill.active .dp-type { color: var(--text); }
+
+  /* ── Tags ── */
+  .tag {
+    display: inline-block; font-size: 0.68rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.07em;
+    padding: 2px 9px; border-radius: 20px; margin-bottom: 12px;
+  }
+  .tag-strength { background: #1e2a5e; color: var(--accent); }
+  .tag-run      { background: #1e3d2e; color: var(--accent3); }
+  .tag-recovery { background: #2a1e1e; color: var(--accent2); }
+
+  /* ── Workout card ── */
+  .workout-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 14px;
+  }
+  .workout-title   { font-size: 1.25rem; font-weight: 700; margin-bottom: 4px; }
+  .workout-subtitle{ color: var(--text-dim); font-size: 0.83rem; margin-bottom: 16px; }
+
+  /* ── Person callout ── */
+  .person-callout {
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 0.83rem;
+    line-height: 1.6;
+    margin-bottom: 14px;
+    border-left: 3px solid;
+  }
+  .callout-ayush  { background: #131b3a; border-color: #6c8fff; }
+  .callout-ayushi { background: #1e1330; border-color: #c084fc; }
+  .callout-title  { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+  .callout-ayush  .callout-title { color: #6c8fff; }
+  .callout-ayushi .callout-title { color: #c084fc; }
+
+  /* ── Exercise table ── */
+  .exercise-table { width: 100%; border-collapse: collapse; font-size: 0.84rem; margin-bottom: 14px; }
+  .exercise-table th {
+    background: var(--surface2); color: var(--text-dim);
+    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em;
+    padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border);
+  }
+  .exercise-table td { padding: 10px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .exercise-table tr:last-child td { border-bottom: none; }
+  .exercise-table tr:hover td { background: var(--surface2); }
+  .exercise-name { font-weight: 600; }
+
+  .badge {
+    display: inline-block; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 4px; padding: 1px 7px; font-size: 0.78rem; font-weight: 600;
+    color: var(--accent); white-space: nowrap;
+  }
+  .badge-rest   { color: var(--accent2); }
+  .badge-rpe    { color: var(--accent3); }
+  .badge-mod    { color: #ffd166; }
+
+  /* ── Run stats ── */
+  .run-stats {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 10px; margin-bottom: 16px;
+  }
+  .stat-box {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 12px; text-align: center;
+  }
+  .stat-label { font-size: 0.68rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; }
+  .stat-value { font-size: 1.4rem; font-weight: 700; margin-top: 4px; }
+  .stat-unit  { font-size: 0.72rem; color: var(--text-dim); margin-top: 2px; }
+
+  /* ── Collapsible ── */
+  .section { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px; overflow: hidden; }
+  .section-header { padding: 12px 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 0.84rem; font-weight: 600; }
+  .section-header:hover { background: rgba(255,255,255,0.03); }
+  .section-chevron { color: var(--text-dim); transition: transform 0.2s; font-size: 0.75rem; }
+  .section-chevron.open { transform: rotate(180deg); }
+  .section-body { padding: 0 16px 14px; font-size: 0.82rem; color: var(--text-dim); line-height: 1.65; display: none; }
+  .section-body.open { display: block; }
+  .bullet-list { padding-left: 16px; }
+  .bullet-list li { margin-bottom: 4px; }
+
+  /* ── Focus banner ── */
+  .focus-banner {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent3); border-radius: 0 10px 10px 0;
+    padding: 10px 14px; font-size: 0.81rem; color: var(--text-dim); margin-bottom: 14px;
+  }
+  .focus-banner strong { color: var(--text); }
+
+  /* ── Profile card ── */
+  .profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+  .profile-box {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px;
+  }
+  .profile-box.highlighted { border-color: var(--person-color); }
+  .profile-box-name { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 8px; }
+  .profile-row { display: flex; justify-content: space-between; font-size: 0.8rem; padding: 3px 0; border-bottom: 1px solid var(--border); }
+  .profile-row:last-child { border-bottom: none; }
+  .profile-key { color: var(--text-dim); }
+  .profile-val { font-weight: 600; text-align: right; }
+
+  @media (max-width: 600px) {
+    .day-strip { gap: 4px; }
+    .day-pill  { padding: 8px 2px; }
+    .day-pill .dp-type { display: none; }
+    .profile-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <h1>🏃 Workout Plan</h1>
+    <div class="date-str" id="dateStr"></div>
+  </div>
+  <div class="controls">
+    <div class="person-toggle">
+      <button class="person-btn active-ayush" id="btnAyush"  onclick="setPerson('ayush')">Ayush</button>
+      <button class="person-btn"              id="btnAyushi" onclick="setPerson('ayushi')">Ayushi</button>
+    </div>
+    <div class="week-control">
+      <label>Week</label>
+      <input type="number" id="weekInput" min="1" max="16" value="1" oninput="setWeek(this.value)">
+      <span style="font-size:0.76rem;color:var(--text-dim)">/ 16</span>
+    </div>
+    <div class="week-nav">
+      <button onclick="changeWeek(-1)">◀</button>
+      <button onclick="changeWeek(1)">▶</button>
+    </div>
+  </div>
+</div>
+
+<div class="day-strip" id="dayStrip"></div>
+<div id="workoutContent"></div>
+
+<script>
+// ─── DATA ────────────────────────────────────────────────────────────────────
+
+const PROFILES = {
+  ayush: {
+    name: 'Ayush', color: '#6c8fff', colorBg: '#131b3a',
+    age: 28, height: '170 cm', weight: '66 kg',
+    vo2: 39.8, rhr: '61 bpm', cadence: '161 spm',
+    goal: 'Half Marathon (Oct) → Full Marathon (Jan)',
+    cadenceTarget: '165–170 spm',
+    hydration: '2.5–3.5 L / day',
+    protein: '110–130 g / day',
+    injuryFocus: 'Knee pain protocol + toe blister prevention',
+    gymNote: 'Prioritize technique over weight. Preserve recovery for running.',
+    lowerANote: 'Tue ideal (before Sat long run). Keep 1–3 RIR on compounds.',
+    lowerBNote: 'Light session — more RIR than Lower A. Focus on quality.',
+    upperANote: 'Improve shoulder stability for running posture. RPE 7–8.',
+    upperBNote: 'Improve posture during long runs. Reduce upper-body fatigue.',
+    tempoNote: 'Start only after October half marathon + knee pain-free.',
+    intervalNote: 'After October half marathon. Current focus: aerobic base.',
+    postHalf: 'Transition to marathon training (January). 3 runs/week.',
+    easyRunNote: 'Slow down if breathing becomes labored. Cadence: 165–170 spm.',
+    longRunNote: 'Knee discomfort — smooth pacing, no aggressive distance jumps.',
+    coreNote: 'Routine A on Monday, Routine B on Friday.',
+  },
+  ayushi: {
+    name: 'Ayushi', color: '#c084fc', colorBg: '#1e1330',
+    age: null, height: null, weight: null,
+    vo2: 35.4, rhr: null, cadence: 'tracking',
+    goal: 'Half Marathon (October)',
+    cadenceTarget: 'Natural — let develop with fitness',
+    hydration: '2–3 L / day',
+    protein: '~1.4–1.8 g / kg / day',
+    injuryFocus: 'Consistency — avoid comparing pace with others',
+    gymNote: 'Same exercises. Use loads that keep 2–3 reps in reserve.',
+    lowerANote: 'Same pattern, lighter loads if recovery is slower.',
+    lowerBNote: 'Light session. Focus on confidence and stability.',
+    upperANote: 'Focus on smooth movement quality, not heavy loads.',
+    upperBNote: 'Focus on smooth movement quality over load.',
+    tempoNote: 'Optional after half marathon. Not required for current goal.',
+    intervalNote: 'Optional. Consistency has far greater impact right now.',
+    postHalf: 'Optional marathon. Half marathon goal is primary.',
+    easyRunNote: 'Run/walk is acceptable while building endurance.',
+    longRunNote: 'Focus on uninterrupted time on feet, not pace.',
+    coreNote: 'Begin with one round of each routine, build to full volume.',
+  },
+};
+
+const WEEKS = [
+  { w:1,  ayush:{ easy:'6 km', long:'10 km'},   ayushi:{ easy:'4 km', long:'8 km'},   focus:'Build' },
+  { w:2,  ayush:{ easy:'6 km', long:'11 km'},   ayushi:{ easy:'4 km', long:'9 km'},   focus:'Build' },
+  { w:3,  ayush:{ easy:'6 km', long:'12 km'},   ayushi:{ easy:'4 km', long:'10 km'},  focus:'Build' },
+  { w:4,  ayush:{ easy:'7 km', long:'10 km'},   ayushi:{ easy:'4 km', long:'8 km'},   focus:'Deload' },
+  { w:5,  ayush:{ easy:'7 km', long:'13 km'},   ayushi:{ easy:'5 km', long:'11 km'},  focus:'Build' },
+  { w:6,  ayush:{ easy:'7 km', long:'14 km'},   ayushi:{ easy:'5 km', long:'12 km'},  focus:'Build' },
+  { w:7,  ayush:{ easy:'8 km', long:'15 km'},   ayushi:{ easy:'5 km', long:'13 km'},  focus:'Build' },
+  { w:8,  ayush:{ easy:'8 km', long:'12 km'},   ayushi:{ easy:'5 km', long:'10 km'},  focus:'Recovery' },
+  { w:9,  ayush:{ easy:'8 km', long:'16 km'},   ayushi:{ easy:'6 km', long:'14 km'},  focus:'Build' },
+  { w:10, ayush:{ easy:'8 km', long:'18 km'},   ayushi:{ easy:'6 km', long:'15 km'},  focus:'Build' },
+  { w:11, ayush:{ easy:'8 km', long:'19 km'},   ayushi:{ easy:'6 km', long:'16 km'},  focus:'Build' },
+  { w:12, ayush:{ easy:'8 km', long:'21 km'},   ayushi:{ easy:'6 km', long:'18 km'},  focus:'Build' },
+  { w:13, ayush:{ easy:'8 km', long:'18 km'},   ayushi:{ easy:'6 km', long:'19 km'},  focus:'Build' },
+  { w:14, ayush:{ easy:'8 km', long:'12 km'},   ayushi:{ easy:'6 km', long:'20 km'},  focus:'Taper' },
+  { w:15, ayush:{ easy:'8 km', long:'21.1 km (RACE 🏁)'}, ayushi:{ easy:'6 km', long:'21.1 km (RACE 🏁)'}, focus:'Race Week' },
+  { w:16, ayush:{ easy:'8 km', long:'Recovery'}, ayushi:{ easy:'6 km', long:'Recovery'}, focus:'Post-Race' },
+];
+
+const DAYS_LIST = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+const WEEK_PLAN = {
+  Mon: { icon:'💪', label:'Upper A + Core', session:'upper-a', type:'strength' },
+  Tue: { icon:'🦵', label:'Lower A',        session:'lower-a', type:'strength' },
+  Wed: { icon:'🏃', label:'Easy Run',       session:'easy-run', type:'run' },
+  Thu: { icon:'💪', label:'Upper B',        session:'upper-b', type:'strength' },
+  Fri: { icon:'🦵', label:'Lower B',        session:'lower-b', type:'strength' },
+  Sat: { icon:'🏅', label:'Long Run',       session:'long-run', type:'run' },
+  Sun: { icon:'🧘', label:'Recovery',       session:'recovery', type:'recovery' },
+};
+
+const SESSIONS = {
+  'upper-a': {
+    title:'Upper Body A + Core', tag:'strength',
+    subtitle:'Pushing + pulling strength. Shoulder stability. Core finisher.',
+    exercises:[
+      { name:'Bench Press',           sets:'4 × 6–8',   rpe:'7–8', rest:'2–3 min', tempo:'2-1-1' },
+      { name:'Lat Pulldown / Pull-up',sets:'4 × 8–10',  rpe:'8',   rest:'90 sec',  tempo:'2-1-2' },
+      { name:'Incline Dumbbell Press',sets:'3 × 10',    rpe:'8',   rest:'90 sec',  tempo:'2-0-2' },
+      { name:'Seated Cable Row',      sets:'3 × 10',    rpe:'8',   rest:'90 sec',  tempo:'2-1-2' },
+      { name:'Lateral Raise',         sets:'3 × 15',    rpe:'8',   rest:'60 sec',  tempo:'2-1-2' },
+      { name:'Face Pull',             sets:'3 × 15',    rpe:'7',   rest:'60 sec',  tempo:'2-1-2' },
+      { name:'Plank',                 sets:'3 × 45–60s',rpe:'—',   rest:'60 sec',  tempo:'Hold'  },
+    ],
+    core:[
+      { name:'Front Plank',  sets:'3 × 45–60s', rest:'45 sec', note:'Anti-extension' },
+      { name:'Side Plank',   sets:'3 × 30–45s/side', rest:'45 sec', note:'Lateral stability' },
+      { name:'Dead Bug',     sets:'3 × 10/side', rest:'45 sec', note:'Core coordination' },
+      { name:'Pallof Press', sets:'3 × 12/side', rest:'45 sec', note:'Anti-rotation' },
+      { name:'Farmer Carry', sets:'3 × 30 m',   rest:'60 sec', note:'Whole-body stability' },
+    ],
+    warmup:['Band external rotations – 2 × 15','Face pulls – 2 × 15','Scapular push-ups – 2 × 10','Empty bar × 15','40% × 8 → 60% × 5 → 80% × 3 → working sets'],
+    stretch:['Doorway chest stretch – 45 sec/side','Lat stretch – 45 sec/side','Cross-body shoulder – 30 sec/side','Triceps stretch – 30 sec/side','Foam roll upper back – 60 sec'],
+    personKey:'upperANote',
+  },
+  'lower-a': {
+    title:'Lower Body A', tag:'strength',
+    subtitle:'Posterior chain strength. Runner\'s foundation — injury prevention and power.',
+    exercises:[
+      { name:'Back Squat',            sets:'4 × 5–6',    rpe:'7–8', rest:'2–3 min', tempo:'3-1-1' },
+      { name:'Romanian Deadlift',     sets:'4 × 8',      rpe:'8',   rest:'2 min',   tempo:'3-1-1' },
+      { name:'Bulgarian Split Squat', sets:'3 × 10/leg', rpe:'8',   rest:'90 sec',  tempo:'2-1-2' },
+      { name:'Lying Leg Curl',        sets:'3 × 12',     rpe:'8',   rest:'75 sec',  tempo:'2-1-2' },
+      { name:'Standing Calf Raise',   sets:'4 × 15',     rpe:'8',   rest:'60 sec',  tempo:'2-1-2' },
+      { name:'Tibialis Raise',        sets:'3 × 15',     rpe:'7',   rest:'45 sec',  tempo:'2-1-2' },
+    ],
+    warmup:['5–7 min incline walk','Bodyweight squats × 15','Glute bridges × 15','Monster walks × 15 steps/direction','Empty bar squat × 15','40% → 60% → 80% warm-up sets before squats'],
+    stretch:['Quadriceps – 45 sec/leg','Hamstrings – 45 sec/leg','Hip flexors – 45 sec/leg','Calf (straight + bent knee) – 45 sec each','Glute stretch – 45 sec/leg'],
+    personKey:'lowerANote',
+    personExtra: {
+      ayush:  ['Ideal slot: Tuesday (before Saturday long run).','Knee priority — never train legs to failure within 24h of long run.'],
+      ayushi: ['Same movements as Ayush, lighter loads.','Use weights where you still have 2–3 reps left at session end.'],
+    },
+  },
+  'upper-b': {
+    title:'Upper Body B', tag:'strength',
+    subtitle:'Overhead push + horizontal pull. Running posture + upper fatigue resilience.',
+    exercises:[
+      { name:'Standing Overhead Press', sets:'4 × 6–8',    rpe:'7–8', rest:'2 min',  tempo:'2-1-1' },
+      { name:'Chest Supported Row',     sets:'4 × 8–10',   rpe:'8',   rest:'90 sec', tempo:'2-1-2' },
+      { name:'Push-ups / Assisted Dips',sets:'3 × 8–15',   rpe:'7',   rest:'75 sec', tempo:'2-0-2' },
+      { name:'Single-arm DB Row',       sets:'3 × 10/side',rpe:'8',   rest:'75 sec', tempo:'2-1-2' },
+      { name:'Rear Delt Fly',           sets:'3 × 15',     rpe:'8',   rest:'60 sec', tempo:'2-1-2' },
+      { name:'Pallof Press',            sets:'3 × 12/side',rpe:'7',   rest:'45 sec', tempo:'Controlled' },
+    ],
+    warmup:['Band external rotations – 2 × 15','Face pulls – 2 × 15','Scapular push-ups – 2 × 10','Empty bar press × 15','40% → 60% → 80% warm-up sets'],
+    stretch:['Cross-body shoulder – 30 sec/side','Doorway chest – 45 sec/side','Lat stretch – 45 sec/side','Triceps stretch – 30 sec/side'],
+    personKey:'upperBNote',
+  },
+  'lower-b': {
+    title:'Lower Body B (Light)', tag:'strength',
+    subtitle:'Stability, single-leg control, glute activation. Lighter — quality over load.',
+    exercises:[
+      { name:'Goblet Squat',      sets:'3 × 10',     rpe:'7', rest:'90 sec', tempo:'2-1-2' },
+      { name:'Hip Thrust',        sets:'3 × 10',     rpe:'8', rest:'90 sec', tempo:'2-1-2' },
+      { name:'Step-ups',          sets:'3 × 10/leg', rpe:'7', rest:'75 sec', tempo:'2-1-2' },
+      { name:'Single-leg RDL',    sets:'3 × 10/leg', rpe:'7', rest:'75 sec', tempo:'3-1-2' },
+      { name:'Seated Calf Raise', sets:'3 × 15',     rpe:'8', rest:'60 sec', tempo:'2-1-2' },
+      { name:'Clamshell (Band)',   sets:'2 × 20/side',rpe:'6', rest:'45 sec', tempo:'Controlled' },
+    ],
+    core:[
+      { name:'Bird Dog',               sets:'3 × 10/side', rest:'30 sec', note:'Spinal stability' },
+      { name:'Single-leg Glute Bridge',sets:'3 × 12/side', rest:'45 sec', note:'Hip control' },
+      { name:'Suitcase Carry',         sets:'3 × 25 m/side',rest:'60 sec', note:'Anti-lateral flexion' },
+      { name:'Hollow Hold',            sets:'3 × 20–30s',  rest:'45 sec', note:'Anterior core' },
+    ],
+    warmup:['Monster walks – 2 × 15 steps/direction','Walking lunges – 10/leg','Single-leg balance – 30 sec/leg','Mini squat holds – 20 sec × 2','Bodyweight calf raises – 20 reps'],
+    stretch:['Quadriceps – 45 sec/leg','Hip flexors – 45 sec/leg','Glute stretch – 45 sec/leg','Calf – 45 sec/side'],
+    personKey:'lowerBNote',
+  },
+  'easy-run': {
+    title:'Easy Run', tag:'run',
+    subtitle:'Aerobic base builder. Conversational effort the entire way.',
+    effort:'RPE 5–6', zone:'Zone 2',
+    cues:['Maintain conversational effort — if you can\'t finish a sentence, slow down.','Aim for quick, light steps. Cadence over pace.','Look 15–20 m ahead. Relax shoulders and hands.','Finish feeling like you could have continued.','Breathe through both nose and mouth. Deep, diaphragmatic.'],
+    warmup:['5 min brisk walk','Leg swings – 10 each direction','Ankle circles – 10/side','Walking lunges – 10/leg','High knees – 20 m','Butt kicks – 20 m','A-skips – 20 m','2 × 20 sec relaxed strides'],
+    cooldown:['3–5 min easy walk','Hamstring – 45 sec/leg','Hip flexor – 45 sec/leg','Calf – 45 sec/leg','Glute – 45 sec/leg'],
+    personKey:'easyRunNote',
+    personExtra:{
+      ayush:  ['Cadence target: 165–170 spm (currently 161). Don\'t force it — gradual improvement.','No tempo effort. This is strictly Zone 2.','Do not replace this run with a tempo run until aerobic base is stronger.'],
+      ayushi: ['Run/walk intervals are fine — build consistency first.','Focus on a relaxed, steady effort. Speed is irrelevant right now.','Let cadence develop naturally as fitness improves.'],
+    },
+  },
+  'long-run': {
+    title:'Long Run', tag:'run',
+    subtitle:'Weekly cornerstone. Endurance is built here. Go easy enough to finish strong.',
+    effort:'RPE 6', zone:'Zone 2',
+    cues:['Start slower than goal effort for the first 10–15 min.','If breathing is labored at any point — slow down immediately.','Fuel every 45–60 min if run exceeds 90 minutes (20–30g carbs).','Log HR, cadence, RPE and how you felt.','It is fine to run/walk if needed — time on feet matters.'],
+    warmup:['5 min brisk walk','Leg swings – 10 each direction','Walking lunges – 10/leg','High knees – 20 m','2 × 20 sec relaxed strides'],
+    cooldown:['5–10 min easy walk','Full stretch: quads, hamstrings, hip flexors, calves, glutes','Foam roll if available','Rehydrate + eat carbs + protein within 60 min'],
+    checklist:['Warm up using standard protocol (10–12 min)','Run at conversational effort throughout','Fuel if run exceeds 90 minutes','Cool down: walk + full stretch','Log HR, cadence, RPE, recovery rating'],
+    personKey:'longRunNote',
+    personExtra:{
+      ayush:  ['Knee watch: any pain >3/10 → stop and assess. Do not push through.','Smooth, even pacing. No surges. Protect the knee for the marathon build.','After October: long run distances shift to marathon prep (22→32 km).'],
+      ayushi: ['Focus on uninterrupted time on feet — pace is secondary.','Run/walk is absolutely fine. Consistency > speed every time.','Goal for Oct: finish confidently and enjoy it.'],
+    },
+  },
+  'recovery': {
+    title:'Recovery + Mobility', tag:'recovery',
+    subtitle:'Active recovery. Promote circulation, reduce soreness, reset for next week.',
+    activities:[
+      '20–30 min easy walk (light jog only if genuinely feeling great)',
+      'Desk-worker mobility: 10 min — hip flexors, thoracic rotation, neck',
+      'Foam roll: calves, quads, hamstrings, glutes – 8–10 min',
+      'Post-workout stretching: all major muscle groups',
+      'Foot & ankle routine (both)',
+    ],
+    metrics:['Log resting HR on Apple Watch','Log HRV','Note knee / foot status (0–10)','Note sleep hours and quality','Body weight (optional)'],
+    sleep:['Sleep 7.5–9 hours.','Review the past week: long run done? Gym sessions? How are you feeling?','Sunday is also a good time to confirm next week\'s schedule.'],
+    personExtra:{
+      ayush:  ['Do the knee prehab routine (twice weekly — fits well on Sun + Wed).','Check toe blister status — update sock/shoe setup if needed.','If resting HR is up >5 bpm or HRV is down → reduce Tuesday intensity.'],
+      ayushi: ['Focus on consistency review: were all workouts done this week?','Don\'t compare pace with others. Your progress is your own benchmark.'],
+    },
+  },
+};
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+// Plan starts Monday 29 June 2026
+const PLAN_START = new Date('2026-06-29T00:00:00');
+
+let currentPerson = localStorage.getItem('workout_person') || 'ayush';
+let currentWeek   = null; // computed from date
+let selectedDay   = null; // 0=Mon … 6=Sun
+
+function todayDayIdx() {
+  const js = new Date().getDay(); // 0=Sun
+  return js === 0 ? 6 : js - 1;
+}
+
+// Returns { week: 1-16, dayIdx: 0-6 } for a given Date, or null if before plan start
+function planPositionFor(date) {
+  const msPerDay  = 86400000;
+  const startNoon = new Date(PLAN_START); startNoon.setHours(0,0,0,0);
+  const d = new Date(date); d.setHours(0,0,0,0);
+  const diff = Math.floor((d - startNoon) / msPerDay);
+  if (diff < 0) return null; // before plan
+  const weekIdx = Math.min(Math.floor(diff / 7), 15); // clamp to week 16
+  const dayIdx  = diff % 7; // 0=Mon … 6=Sun
+  return { week: weekIdx + 1, dayIdx };
+}
+
+// Returns the Monday Date of a given plan week (1-indexed)
+function weekStartDate(w) {
+  const d = new Date(PLAN_START);
+  d.setDate(d.getDate() + (w - 1) * 7);
+  return d;
+}
+
+// Date string for day pill: "29 Jun"
+function dayPillDate(weekNum, dayIdx) {
+  const d = new Date(weekStartDate(weekNum));
+  d.setDate(d.getDate() + dayIdx);
+  return d.toLocaleDateString('en-GB', { day:'numeric', month:'short' });
+}
+
+function init() {
+  const pos = planPositionFor(new Date());
+  if (pos) {
+    currentWeek = pos.week;
+    selectedDay = pos.dayIdx;
+  } else {
+    currentWeek = 1;
+    selectedDay = 0; // Mon — plan hasn't started yet
+  }
+  document.getElementById('weekInput').value = currentWeek;
+  applyPersonColor();
+  updateDateStr();
+  renderDayStrip();
+  renderWorkout();
+}
+
+function updateDateStr() {
+  document.getElementById('dateStr').textContent =
+    new Date().toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+}
+
+function setPerson(p) {
+  currentPerson = p;
+  localStorage.setItem('workout_person', p);
+  applyPersonColor();
+  document.getElementById('btnAyush') .className = 'person-btn' + (p === 'ayush'  ? ' active-ayush'  : '');
+  document.getElementById('btnAyushi').className = 'person-btn' + (p === 'ayushi' ? ' active-ayushi' : '');
+  renderDayStrip();
+  renderWorkout();
+}
+
+function applyPersonColor() {
+  document.documentElement.style.setProperty('--person-color', PROFILES[currentPerson].color);
+}
+
+function setWeek(v) {
+  currentWeek = Math.max(1, Math.min(16, parseInt(v) || 1));
+  document.getElementById('weekInput').value = currentWeek;
+  renderDayStrip();
+  renderWorkout();
+}
+function changeWeek(d) { setWeek(currentWeek + d); }
+
+// ─── DAY STRIP ───────────────────────────────────────────────────────────────
+function renderDayStrip() {
+  const todayPos = planPositionFor(new Date());
+  const wk = WEEKS[currentWeek - 1];
+  const p  = currentPerson;
+  const strip = document.getElementById('dayStrip');
+  strip.innerHTML = DAYS_LIST.map((day, i) => {
+    const info = WEEK_PLAN[day];
+    let sublabel = info.label;
+    if (day === 'Wed' && wk) sublabel = `Easy ${wk[p].easy}`;
+    if (day === 'Sat' && wk) sublabel = `Long ${wk[p].long.replace(' (RACE 🏁)','')}`;
+
+    const dateStr = dayPillDate(currentWeek, i);
+    const isToday = todayPos && todayPos.week === currentWeek && todayPos.dayIdx === i;
+
+    let cls = 'day-pill';
+    if (i === selectedDay) cls += ' active';
+    if (isToday)           cls += ' today';
+
+    return `<div class="${cls}" onclick="selectDay(${i})">
+      <div class="dp-icon">${info.icon}</div>
+      <div class="dp-name">${day} <span style="font-size:0.58rem;color:var(--text-dim)">${dateStr}</span></div>
+      <div class="dp-type">${sublabel}</div>
+    </div>`;
+  }).join('');
+}
+
+function selectDay(i) { selectedDay = i; renderDayStrip(); renderWorkout(); }
+
+// ─── WORKOUT RENDER ──────────────────────────────────────────────────────────
+function renderWorkout() {
+  const day     = DAYS_LIST[selectedDay];
+  const info    = WEEK_PLAN[day];
+  const wk      = WEEKS[currentWeek - 1];
+  const session = SESSIONS[info.session];
+  const profile = PROFILES[currentPerson];
+  document.getElementById('workoutContent').innerHTML = buildHTML(day, info, session, wk, profile);
+}
+
+function buildHTML(day, info, session, wk, profile) {
+  let h = '';
+
+  // Focus banner
+  const focusCol = { Deload:'var(--accent2)', Recovery:'var(--accent2)', 'Race Week':'#ffd166', 'Post-Race':'#ffd166' }[wk.focus] || 'var(--accent3)';
+  const pData = wk[currentPerson];
+  const wkStart = weekStartDate(currentWeek);
+  const wkEnd   = new Date(wkStart); wkEnd.setDate(wkEnd.getDate() + 6);
+  const fmt = d => d.toLocaleDateString('en-GB', { day:'numeric', month:'short' });
+  h += `<div class="focus-banner">
+    Week ${wk.w} of 16 — <strong style="color:${focusCol}">${wk.focus}</strong>
+    &nbsp;·&nbsp; <span style="color:var(--text-dim)">${fmt(wkStart)} – ${fmt(wkEnd)}</span>
+    &nbsp;·&nbsp; Wed easy: <strong>${pData.easy}</strong>
+    &nbsp;·&nbsp; Sat long: <strong>${pData.long}</strong>
+  </div>`;
+
+  h += `<div class="workout-card">`;
+
+  const tagLabel = { strength:'Strength', run:'Running', recovery:'Recovery' }[session.tag];
+  h += `<div class="tag tag-${session.tag}">${tagLabel}</div>`;
+  h += `<div class="workout-title">${info.icon} ${session.title}</div>`;
+  h += `<div class="workout-subtitle">${session.subtitle}</div>`;
+
+  // ── Person callout ──
+  const personNote = profile[session.personKey];
+  const personExtra = session.personExtra?.[currentPerson] || [];
+  const allNotes = [personNote, ...personExtra].filter(Boolean);
+
+  if (allNotes.length) {
+    h += `<div class="person-callout callout-${currentPerson}">
+      <div class="callout-title">📍 ${profile.name}'s Notes</div>
+      <ul class="bullet-list">${allNotes.map(n=>`<li>${n}</li>`).join('')}</ul>
+    </div>`;
+  }
+
+  // ── RUN ──
+  if (session.tag === 'run') {
+    const dist = day === 'Wed' ? pData.easy : pData.long;
+    const isRace = dist.includes('RACE');
+
+    h += `<div class="run-stats">
+      <div class="stat-box">
+        <div class="stat-label">Distance</div>
+        <div class="stat-value" style="color:var(--accent3)">${dist.replace(' (RACE 🏁)','')}</div>
+        ${isRace ? '<div class="stat-unit" style="color:#ffd166">🏁 RACE DAY</div>' : ''}
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Effort</div>
+        <div class="stat-value" style="font-size:1rem;color:var(--accent3);margin-top:6px">${session.effort}</div>
+        <div class="stat-unit">${session.zone}</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Cadence Target</div>
+        <div class="stat-value" style="font-size:0.95rem;color:var(--accent);margin-top:6px">${profile.cadenceTarget.split(' ')[0]}</div>
+        <div class="stat-unit">${currentPerson === 'ayush' ? 'spm target (now 161)' : 'natural — no forcing'}</div>
+      </div>
+    </div>`;
+
+    h += collapsible('🚶 Warm-up', session.warmup, true);
+    h += collapsible('🎯 Running Cues', session.cues);
+    h += collapsible('🧊 Cool-down', session.cooldown);
+    if (session.checklist) h += collapsible('✅ Checklist', session.checklist);
+  }
+
+  // ── STRENGTH ──
+  else if (session.tag === 'strength') {
+    // Ayushi modifier note
+    if (currentPerson === 'ayushi') {
+      h += `<div style="font-size:0.78rem;color:#c084fc;background:#1e1330;border-radius:8px;padding:8px 12px;margin-bottom:12px">
+        ℹ️ Same exercises as Ayush — adjust weight so 2–3 reps remain in reserve on every set.
+      </div>`;
+    }
+
+    h += collapsible('🔥 Warm-up', session.warmup, true);
+
+    h += `<table class="exercise-table"><thead><tr>
+      <th>Exercise</th><th>Sets × Reps</th><th>RPE</th><th>Rest</th><th>Tempo</th>
+    </tr></thead><tbody>`;
+    session.exercises.forEach(ex => {
+      h += `<tr>
+        <td><span class="exercise-name">${ex.name}</span></td>
+        <td><span class="badge">${ex.sets}</span></td>
+        <td><span class="badge badge-rpe">${ex.rpe}</span></td>
+        <td><span class="badge badge-rest">${ex.rest}</span></td>
+        <td style="color:var(--text-dim);font-size:0.79rem">${ex.tempo}</td>
+      </tr>`;
+    });
+    h += `</tbody></table>`;
+
+    if (session.core) {
+      h += `<h3 style="font-size:0.88rem;color:var(--text-dim);margin-bottom:8px">Core Finisher</h3>`;
+      if (currentPerson === 'ayushi') {
+        h += `<div style="font-size:0.76rem;color:#c084fc;margin-bottom:8px">Begin with 1 round of each. Build to full volume over weeks.</div>`;
+      }
+      h += `<table class="exercise-table"><thead><tr>
+        <th>Exercise</th><th>Sets</th><th>Rest</th><th>Purpose</th>
+      </tr></thead><tbody>`;
+      session.core.forEach(ex => {
+        h += `<tr>
+          <td><span class="exercise-name">${ex.name}</span></td>
+          <td><span class="badge">${ex.sets}</span></td>
+          <td><span class="badge badge-rest">${ex.rest}</span></td>
+          <td style="color:var(--text-dim);font-size:0.79rem">${ex.note}</td>
+        </tr>`;
+      });
+      h += `</tbody></table>`;
+    }
+
+    h += collapsible('🧊 Post-workout Stretch', session.stretch);
+  }
+
+  // ── RECOVERY ──
+  else {
+    h += `<ul class="bullet-list" style="font-size:0.86rem;line-height:1.9;margin-bottom:14px">`;
+    session.activities.forEach(a => { h += `<li>${a}</li>`; });
+    h += `</ul>`;
+
+    // Profile snapshot on recovery day
+    h += `<div class="profile-grid">
+      ${buildProfileBox('ayush',  currentPerson === 'ayush')}
+      ${buildProfileBox('ayushi', currentPerson === 'ayushi')}
+    </div>`;
+
+    h += collapsible('📱 Metrics to Log', session.metrics);
+    h += collapsible('😴 Weekly Review', session.sleep);
+  }
+
+  h += `</div>`; // workout-card
+  return h;
+}
+
+function buildProfileBox(p, highlighted) {
+  const pr = PROFILES[p];
+  const rows = [
+    ['Goal', pr.goal],
+    ['VO₂ Max', `~${pr.vo2}`],
+    ...(pr.rhr ? [['Resting HR', pr.rhr]] : []),
+    ['Cadence', pr.cadence],
+    ['Cadence Target', pr.cadenceTarget],
+    ['Hydration', pr.hydration],
+    ['Protein', pr.protein],
+    ['Injury Focus', pr.injuryFocus],
+    ['Post Half-Marathon', pr.postHalf],
+  ];
+  const color = pr.color;
+  return `<div class="profile-box ${highlighted ? 'highlighted' : ''}">
+    <div class="profile-box-name" style="color:${color}">${pr.name}</div>
+    ${rows.map(([k,v]) => `<div class="profile-row"><span class="profile-key">${k}</span><span class="profile-val" style="max-width:55%;font-size:0.76rem">${v}</span></div>`).join('')}
+  </div>`;
+}
+
+function collapsible(title, items, open = false) {
+  const id = 'sec_' + Math.random().toString(36).slice(2,8);
+  return `<div class="section">
+    <div class="section-header" onclick="tog('${id}')">
+      <span>${title}</span>
+      <span class="section-chevron ${open ? 'open' : ''}" id="chev_${id}">▼</span>
+    </div>
+    <div class="section-body ${open ? 'open' : ''}" id="${id}">
+      <ul class="bullet-list">${items.map(i=>`<li>${i}</li>`).join('')}</ul>
+    </div>
+  </div>`;
+}
+
+function tog(id) {
+  document.getElementById(id).classList.toggle('open');
+  document.getElementById('chev_'+id).classList.toggle('open');
+}
+
+init();
+</script>
+</body>
+</html>
