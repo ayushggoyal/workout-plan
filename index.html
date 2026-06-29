@@ -410,6 +410,19 @@
     border-radius: 6px; padding: 4px 10px; font-size: 0.78rem; font-weight: 600;
   }
 
+  /* ── Bulk log exercise sections ── */
+  .bulk-ex-section {
+    border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px; margin-bottom: 14px;
+  }
+  .bulk-ex-header {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 6px; gap: 8px;
+  }
+  .bulk-ex-name { font-weight: 700; font-size: 0.88rem; }
+  .bulk-ex-planned { font-size: 0.73rem; color: var(--text-dim); white-space: nowrap; }
+  .bulk-ex-last { font-size: 0.72rem; color: var(--text-dim); margin-bottom: 8px; min-height: 16px; }
+
   /* ── Set rows ── */
   .sets-list { margin-bottom: 12px; }
   .set-row {
@@ -1321,6 +1334,39 @@ async function testPat() {
 // ─── LOG MODAL ───────────────────────────────────────────────────────────────
 let _logDay = null;
 
+let _bulkSetCounters = {};
+
+function addBulkSet(exIdx, weight = '', reps = '') {
+  if (!_bulkSetCounters[exIdx]) _bulkSetCounters[exIdx] = 0;
+  _bulkSetCounters[exIdx]++;
+  const sid  = _bulkSetCounters[exIdx];
+  const list = document.getElementById(`bulk_sets_${exIdx}`);
+  if (!list) return;
+  const num  = list.children.length + 1;
+  const div  = document.createElement('div');
+  div.className = 'set-row';
+  div.dataset.setid = sid;
+  div.innerHTML = `
+    <div class="set-num">${num}</div>
+    <input class="set-input" id="bsw_${exIdx}_${sid}" type="number" step="0.5" min="0" placeholder="kg" value="${weight}">
+    <input class="set-input" id="bsr_${exIdx}_${sid}" type="number" min="0" placeholder="reps" value="${reps}">
+    <button class="set-remove" onclick="removeBulkSet(this,${exIdx})">✕</button>
+  `;
+  list.appendChild(div);
+  renumberBulkSets(exIdx);
+}
+
+function removeBulkSet(btn, exIdx) {
+  btn.closest('.set-row').remove();
+  renumberBulkSets(exIdx);
+}
+
+function renumberBulkSets(exIdx) {
+  document.querySelectorAll(`#bulk_sets_${exIdx} .set-row`).forEach((row, i) => {
+    row.querySelector('.set-num').textContent = i + 1;
+  });
+}
+
 function openLogModal(day) {
   if (!ghPat()) { openSettings(); return; }
   _logDay = day;
@@ -1339,36 +1385,61 @@ function openLogModal(day) {
   let body = '';
 
   if (session.tag === 'strength') {
+    const allEx = getAllExercises(session);
+    _bulkSetCounters = {};
     body += `<div class="form-group">
       <label class="form-label">Overall RPE (1–10)</label>
       <input class="form-input" id="log_rpe" type="number" min="1" max="10" placeholder="e.g. 7">
     </div>`;
-    body += `<label class="form-label" style="margin-bottom:8px">Exercises — log what you did</label>`;
-    body += `<div class="ex-log-list">`;
-    session.exercises.forEach((ex, i) => {
-      body += `<div class="ex-log-card">
-        <div class="ex-log-name">${ex.name}</div>
-        <div class="ex-log-planned">Planned: ${ex.sets} · RPE ${ex.rpe}</div>
-        <div class="ex-log-fields">
-          <div class="ex-log-field">
-            <label for="log_w${i}">Weight (kg)</label>
-            <input class="ex-log-input" id="log_w${i}" placeholder="e.g. 60">
-          </div>
-          <div class="ex-log-field">
-            <label for="log_r${i}">Reps done</label>
-            <input class="ex-log-input" id="log_r${i}" placeholder="e.g. 8,8,7,7">
-          </div>
+    allEx.forEach((ex, i) => {
+      body += `<div class="bulk-ex-section">
+        <div class="bulk-ex-header">
+          <span class="bulk-ex-name">${ex.name}</span>
+          <span class="bulk-ex-planned">${ex.sets}${ex.rpe !== '—' ? ` · RPE ${ex.rpe}` : ''}</span>
         </div>
+        <div class="bulk-ex-last" id="bulk_last_${i}">⏱ Loading last log…</div>
+        <div class="set-col-labels">
+          <div class="set-col-label">#</div>
+          <div class="set-col-label">Weight (kg)</div>
+          <div class="set-col-label">Reps</div>
+          <div class="set-col-label"></div>
+        </div>
+        <div class="sets-list" id="bulk_sets_${i}"></div>
+        <button class="add-set-btn" onclick="addBulkSet(${i})">+ Add Set</button>
       </div>`;
     });
-    body += `</div>`;
-    if (session.core) {
-      body += `<label class="form-label" style="margin-bottom:8px">Core — done?</label>`;
-      body += `<div style="display:flex;gap:8px;align-items:center;margin-bottom:14px">
-        <input type="checkbox" id="log_core" style="width:16px;height:16px">
-        <label for="log_core" style="font-size:0.84rem;color:var(--text-dim)">Core finisher completed</label>
-      </div>`;
-    }
+    document.getElementById('logModalBody').innerHTML = body +
+      `<div class="form-group"><label class="form-label">Notes / How it felt</label>
+       <textarea class="form-textarea" id="log_notes" placeholder="Anything notable…"></textarea></div>`;
+    document.getElementById('logModal').classList.add('open');
+    // Add default sets and fetch last logs
+    allEx.forEach((ex, i) => {
+      const n = parseInt(ex.sets) || 3;
+      for (let s = 0; s < n; s++) addBulkSet(i);
+      fetchLastExLog(ex.name, day).then(last => {
+        const el = document.getElementById(`bulk_last_${i}`);
+        if (!el) return;
+        if (last) {
+          el.innerHTML = `<span style="color:var(--accent);font-weight:700;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.06em">Last — ${last.date}</span>
+            <span style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">
+            ${last.sets.map((s,si) => `<span class="last-log-set">Set ${si+1}: ${s.weight}kg×${s.reps}</span>`).join('')}</span>`;
+          // Pre-fill sets
+          const rows = document.querySelectorAll(`#bulk_sets_${i} .set-row`);
+          last.sets.forEach((s, si) => {
+            const rowId = rows[si]?.dataset?.setid;
+            if (rowId) {
+              const w = document.getElementById(`bsw_${i}_${rowId}`);
+              const r = document.getElementById(`bsr_${i}_${rowId}`);
+              if (w) w.value = s.weight;
+              if (r) r.value = s.reps;
+            }
+          });
+        } else {
+          el.textContent = 'No previous log found.';
+        }
+      });
+    });
+    return; // modal already opened above
   }
 
   else if (session.tag === 'run') {
@@ -1451,16 +1522,54 @@ async function submitLog() {
   const notes = document.getElementById('log_notes')?.value?.trim();
 
   if (session.tag === 'strength') {
-    const rpe = document.getElementById('log_rpe')?.value;
-    if (rpe) issueBody += `**Overall RPE:** ${rpe}/10\n\n`;
-    issueBody += `### Exercises\n\n| Exercise | Planned | Weight | Reps |\n|---|---|---|---|\n`;
-    session.exercises.forEach((ex, i) => {
-      const w = document.getElementById(`log_w${i}`)?.value || '—';
-      const r = document.getElementById(`log_r${i}`)?.value || '—';
-      issueBody += `| ${ex.name} | ${ex.sets} | ${w} kg | ${r} |\n`;
-    });
-    const coreDone = document.getElementById('log_core')?.checked;
-    if (session.core) issueBody += `\n**Core finisher:** ${coreDone ? '✓ Done' : '✗ Skipped'}\n`;
+    const allEx  = getAllExercises(session);
+    const rpe    = document.getElementById('log_rpe')?.value?.trim();
+    const notes  = document.getElementById('log_notes')?.value?.trim();
+    const created = [], failed = [];
+    for (let i = 0; i < allEx.length; i++) {
+      const ex = allEx[i];
+      const setRows = document.querySelectorAll(`#bulk_sets_${i} .set-row`);
+      const sets = [];
+      setRows.forEach((row, si) => {
+        const sid = row.dataset.setid;
+        const w = document.getElementById(`bsw_${i}_${sid}`)?.value?.trim() || '';
+        const r = document.getElementById(`bsr_${i}_${sid}`)?.value?.trim() || '';
+        if (w || r) sets.push({ num: si + 1, weight: w || '—', reps: r || '—' });
+      });
+      if (!sets.length) continue;
+      msg.textContent = `Saving ${ex.name}… (${i + 1}/${allEx.length})`;
+      let exBody = `## Exercise Log: ${ex.name}\n\n| | |\n|---|---|\n`;
+      exBody += `| **Person** | ${profile.name} |\n| **Date** | ${dateStr} |\n`;
+      exBody += `| **Week** | ${wk.w} of 16 (${wk.focus}) |\n| **Session** | ${session.title} |\n`;
+      exBody += `| **Planned** | ${ex.sets}${ex.rpe !== '—' ? ` · RPE ${ex.rpe}` : ''} |\n`;
+      if (rpe) exBody += `| **Overall RPE** | ${rpe}/10 |\n`;
+      exBody += `\n## Sets\n\n| Set | Weight (kg) | Reps |\n|---|---|---|\n`;
+      sets.forEach(s => { exBody += `| ${s.num} | ${s.weight} | ${s.reps} |\n`; });
+      if (notes) exBody += `\n## Notes\n\n${notes}\n`;
+      const exTitle = `[${dateStr}] ${profile.name} — ${ex.name} (Week ${wk.w})`;
+      const labels = ['exercise-log', currentPerson, exSlug(ex.name), `day-${day.toLowerCase()}`, `week-${wk.w}`];
+      try {
+        const r = await ghFetch(`/repos/${ghRepo()}/issues`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title: exTitle, body: exBody, labels }),
+        });
+        if (r.ok) { const d = await r.json(); created.push({ name: ex.name, url: d.html_url, num: d.number }); }
+        else failed.push(ex.name);
+      } catch { failed.push(ex.name); }
+    }
+    localStorage.setItem(loggedKey(day, currentWeek), 'bulk');
+    msg.style.color = failed.length ? 'var(--accent2)' : 'var(--accent3)';
+    if (created.length) {
+      msg.innerHTML = `✓ ${created.length} exercise${created.length > 1 ? 's' : ''} logged: ` +
+        created.map(c => `<a href="${c.url}" target="_blank" style="color:var(--accent)">#${c.num} ${c.name}</a>`).join(', ') +
+        (failed.length ? `<br>✗ Failed: ${failed.join(', ')}` : '');
+    } else {
+      msg.style.color = 'var(--text-dim)';
+      msg.textContent = 'No sets entered — nothing saved.';
+    }
+    btn.textContent = '✓ Done';
+    renderWorkout();
+    return;
   }
 
   else if (session.tag === 'run') {
