@@ -170,19 +170,32 @@
   /* Mobile: switch exercise table to cards */
   @media (max-width: 600px) {
     .table-scroll { overflow-x: visible; }
-    .exercise-table, .exercise-table thead, .exercise-table tbody,
-    .exercise-table th, .exercise-table td, .exercise-table tr { display: block; }
+    .exercise-table { display: block; min-width: 0; }
     .exercise-table thead { display: none; }
+    .exercise-table tbody { display: block; }
     .exercise-table tr {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
       background: var(--surface2); border: 1px solid var(--border);
       border-radius: 10px; margin-bottom: 8px; padding: 12px;
     }
-    .exercise-table td { padding: 2px 0; border: none; font-size: 0.82rem; }
-    .exercise-table td:first-child { font-weight: 700; font-size: 0.9rem; margin-bottom: 6px; }
-    .exercise-table td:not(:first-child)::before {
-      content: attr(data-label) ": ";
-      color: var(--text-dim); font-size: 0.72rem;
+    .exercise-table td { border: none; padding: 0; font-size: 0.82rem; }
+    /* Exercise name — full row */
+    .exercise-table td:first-child {
+      flex: 0 0 100%; font-weight: 700; font-size: 0.9rem;
+      padding-bottom: 8px; border-bottom: 1px solid var(--border);
     }
+    /* Badge cells — auto-width, sit in a row */
+    .exercise-table td[data-label="Sets"],
+    .exercise-table td[data-label="RPE"],
+    .exercise-table td[data-label="Rest"] { flex: 0 0 auto; }
+    /* Tempo / Purpose — dimmed, full row */
+    .exercise-table td[data-label="Tempo"],
+    .exercise-table td[data-label="Purpose"] {
+      flex: 0 0 100%; font-size: 0.74rem; color: var(--text-dim);
+    }
+    /* Log button cell — full row, no pseudo label */
+    .exercise-table td.td-log { flex: 0 0 100%; padding-top: 4px; }
+    .exercise-table td.td-log::before { content: none; }
   }
 
   .badge {
