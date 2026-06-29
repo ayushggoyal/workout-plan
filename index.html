@@ -362,6 +362,77 @@
     background: #2a1e0e; border: 1px solid #5a3e1a; border-radius: 8px;
     padding: 10px 12px; font-size: 0.78rem; color: #ffd166; margin-bottom: 14px; line-height: 1.5;
   }
+
+  /* ── Exercise log button in table/card ── */
+  .ex-log-btn {
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--text-dim); border-radius: 7px;
+    padding: 6px 12px; font-size: 0.78rem; cursor: pointer;
+    white-space: nowrap; min-height: 36px;
+  }
+  .ex-log-btn:active { background: var(--surface2); color: var(--text); }
+  /* On mobile card layout the button cell becomes full-width */
+  @media (max-width: 600px) {
+    .exercise-table td.td-log { padding-top: 8px; }
+    .ex-log-btn { width: 100%; }
+  }
+
+  /* ── Per-exercise log modal ── */
+  .ex-modal-planned {
+    font-size: 0.78rem; color: var(--text-dim);
+    background: var(--surface2); border-radius: 8px;
+    padding: 8px 12px; margin-bottom: 14px; line-height: 1.5;
+  }
+  .last-log-box {
+    background: #131b3a; border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px; margin-bottom: 16px;
+    font-size: 0.8rem;
+  }
+  .last-log-title { font-size: 0.7rem; color: var(--accent); font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+  .last-log-sets  { display: flex; flex-wrap: wrap; gap: 6px; }
+  .last-log-set   {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 4px 10px; font-size: 0.78rem; font-weight: 600;
+  }
+
+  /* ── Set rows ── */
+  .sets-list { margin-bottom: 12px; }
+  .set-row {
+    display: grid; grid-template-columns: 28px 1fr 1fr 36px;
+    gap: 8px; align-items: center; margin-bottom: 8px;
+  }
+  .set-num {
+    font-size: 0.72rem; font-weight: 700; color: var(--text-dim);
+    text-align: center;
+  }
+  .set-input {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); padding: 10px 10px;
+    font-size: 1rem; font-family: inherit; min-height: 44px;
+    text-align: center; width: 100%;
+  }
+  .set-input:focus { outline: none; border-color: var(--person-color); }
+  .set-input::placeholder { color: var(--text-dim); font-size: 0.8rem; }
+  .set-remove {
+    background: none; border: 1px solid var(--border);
+    border-radius: 8px; color: var(--accent2); cursor: pointer;
+    font-size: 1rem; min-height: 44px; min-width: 36px;
+  }
+  .set-remove:active { background: var(--surface2); }
+  .set-col-labels {
+    display: grid; grid-template-columns: 28px 1fr 1fr 36px;
+    gap: 8px; margin-bottom: 4px;
+  }
+  .set-col-label { font-size: 0.67rem; color: var(--text-dim); text-transform: uppercase;
+    letter-spacing: 0.05em; text-align: center; }
+
+  .add-set-btn {
+    width: 100%; background: var(--surface2); border: 1px dashed var(--border);
+    color: var(--text-dim); border-radius: 10px; padding: 10px;
+    font-size: 0.85rem; cursor: pointer; min-height: 44px; margin-bottom: 14px;
+  }
+  .add-set-btn:active { border-color: var(--person-color); color: var(--text); }
 </style>
 </head>
 <body>
@@ -431,6 +502,33 @@
       <button class="btn btn-ghost"   onclick="closeLogModal()">Cancel</button>
     </div>
     <div id="logMsg" style="font-size:0.8rem;margin-top:10px;color:var(--text-dim)"></div>
+  </div>
+</div>
+
+<!-- Per-Exercise Log Modal -->
+<div class="modal-overlay" id="exLogModal">
+  <div class="modal">
+    <div class="modal-title" id="exLogTitle">Log Exercise</div>
+    <button class="modal-close" onclick="closeExLog()">✕</button>
+    <div class="ex-modal-planned" id="exLogPlanned"></div>
+    <div id="exLogLastBox"></div>
+    <div class="set-col-labels">
+      <div class="set-col-label">#</div>
+      <div class="set-col-label">Weight (kg)</div>
+      <div class="set-col-label">Reps</div>
+      <div class="set-col-label"></div>
+    </div>
+    <div class="sets-list" id="exLogSets"></div>
+    <button class="add-set-btn" onclick="addExSet()">+ Add Set</button>
+    <div class="form-group">
+      <label class="form-label">Notes</label>
+      <textarea class="form-textarea" id="exLogNotes" placeholder="How it felt, form cues…"></textarea>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-primary" id="exLogSubmitBtn" onclick="submitExLog()" style="flex:1">Save to GitHub</button>
+      <button class="btn btn-ghost" onclick="closeExLog()" style="min-width:80px">Cancel</button>
+    </div>
+    <div id="exLogMsg" style="font-size:0.8rem;margin-top:10px;color:var(--text-dim)"></div>
   </div>
 </div>
 
@@ -845,15 +943,16 @@ function buildHTML(day, info, session, wk, profile) {
     h += collapsible('🔥 Warm-up', session.warmup, true);
 
     h += `<div class="table-scroll"><table class="exercise-table"><thead><tr>
-      <th>Exercise</th><th>Sets × Reps</th><th>RPE</th><th>Rest</th><th>Tempo</th>
+      <th>Exercise</th><th>Sets × Reps</th><th>RPE</th><th>Rest</th><th>Tempo</th><th></th>
     </tr></thead><tbody>`;
-    session.exercises.forEach(ex => {
+    session.exercises.forEach((ex, i) => {
       h += `<tr>
         <td><span class="exercise-name">${ex.name}</span></td>
         <td data-label="Sets" ><span class="badge">${ex.sets}</span></td>
         <td data-label="RPE"  ><span class="badge badge-rpe">${ex.rpe}</span></td>
         <td data-label="Rest" ><span class="badge badge-rest">${ex.rest}</span></td>
         <td data-label="Tempo" style="color:var(--text-dim);font-size:0.79rem">${ex.tempo}</td>
+        <td class="td-log"><button class="ex-log-btn" onclick="openExLog('${day}',${i})">📝 Log</button></td>
       </tr>`;
     });
     h += `</tbody></table></div>`;
@@ -864,14 +963,16 @@ function buildHTML(day, info, session, wk, profile) {
         h += `<div style="font-size:0.76rem;color:#c084fc;margin-bottom:8px">Begin with 1 round. Build to full volume over weeks.</div>`;
       }
       h += `<div class="table-scroll"><table class="exercise-table"><thead><tr>
-        <th>Exercise</th><th>Sets</th><th>Rest</th><th>Purpose</th>
+        <th>Exercise</th><th>Sets</th><th>Rest</th><th>Purpose</th><th></th>
       </tr></thead><tbody>`;
-      session.core.forEach(ex => {
+      session.core.forEach((ex, ci) => {
+        const coreIdx = session.exercises.length + ci;
         h += `<tr>
           <td><span class="exercise-name">${ex.name}</span></td>
           <td data-label="Sets"><span class="badge">${ex.sets}</span></td>
           <td data-label="Rest"><span class="badge badge-rest">${ex.rest}</span></td>
           <td data-label="Purpose" style="color:var(--text-dim);font-size:0.79rem">${ex.note}</td>
+          <td class="td-log"><button class="ex-log-btn" onclick="openExLog('${day}',${coreIdx})">📝 Log</button></td>
         </tr>`;
       });
       h += `</tbody></table></div>`;
@@ -948,6 +1049,204 @@ function tog(id) {
 }
 
 init();
+
+// ─── PER-EXERCISE LOG ────────────────────────────────────────────────────────
+let _exLogDay  = null;
+let _exLogEx   = null; // { name, sets (planned), rpe }
+let _exSetId   = 0;
+
+function exSlug(name) {
+  return 'ex-' + name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g,'');
+}
+
+function getAllExercises(session) {
+  return [...(session.exercises || []), ...(session.core || []).map(c => ({
+    name: c.name, sets: c.sets, rpe: '—', rest: c.rest, tempo: c.note
+  }))];
+}
+
+async function openExLog(day, exIdx) {
+  if (!ghPat()) { openSettings(); return; }
+
+  const session = SESSIONS[WEEK_PLAN[day].session];
+  const allEx   = getAllExercises(session);
+  const ex      = allEx[exIdx];
+  _exLogDay = day;
+  _exLogEx  = ex;
+  _exSetId  = 0;
+
+  document.getElementById('exLogTitle').textContent = ex.name;
+  document.getElementById('exLogPlanned').innerHTML =
+    `Planned: <strong style="color:var(--text)">${ex.sets}</strong>` +
+    (ex.rpe !== '—' ? ` &nbsp;·&nbsp; RPE <strong style="color:var(--text)">${ex.rpe}</strong>` : '') +
+    (ex.rest ? ` &nbsp;·&nbsp; Rest <strong style="color:var(--text)">${ex.rest}</strong>` : '');
+  document.getElementById('exLogSets').innerHTML = '';
+  document.getElementById('exLogNotes').value = '';
+  document.getElementById('exLogMsg').textContent = '';
+  document.getElementById('exLogSubmitBtn').disabled = false;
+  document.getElementById('exLogSubmitBtn').textContent = 'Save to GitHub';
+  document.getElementById('exLogLastBox').innerHTML =
+    `<div class="last-log-box"><div class="last-log-title">⏱ Loading last log…</div></div>`;
+  document.getElementById('exLogModal').classList.add('open');
+
+  // Add default sets based on planned (parse "4 × 6–8" → 4 sets)
+  const plannedSets = parseInt(ex.sets) || 3;
+  for (let i = 0; i < plannedSets; i++) addExSet();
+
+  // Fetch last log in background
+  const last = await fetchLastExLog(ex.name, day);
+  if (last) {
+    // Pre-fill sets with last values
+    const rows = document.querySelectorAll('#exLogSets .set-row');
+    last.sets.forEach((s, i) => {
+      if (i >= rows.length) addExSet();
+      const rowId = document.querySelectorAll('#exLogSets .set-row')[i]?.dataset.setid;
+      if (rowId) {
+        const w = document.getElementById(`sw_${rowId}`);
+        const r = document.getElementById(`sr_${rowId}`);
+        if (w) w.value = s.weight;
+        if (r) r.value = s.reps;
+      }
+    });
+    document.getElementById('exLogLastBox').innerHTML = `
+      <div class="last-log-box">
+        <div class="last-log-title">📅 Last logged — ${last.date}</div>
+        <div class="last-log-sets">${last.sets.map((s,i) =>
+          `<div class="last-log-set">Set ${i+1}: ${s.weight}kg × ${s.reps}</div>`
+        ).join('')}</div>
+      </div>`;
+  } else {
+    document.getElementById('exLogLastBox').innerHTML =
+      `<div style="font-size:0.75rem;color:var(--text-dim);margin-bottom:12px">No previous log found for this exercise.</div>`;
+  }
+}
+
+function closeExLog() { document.getElementById('exLogModal').classList.remove('open'); }
+
+function addExSet(weight = '', reps = '') {
+  _exSetId++;
+  const id   = _exSetId;
+  const list = document.getElementById('exLogSets');
+  const num  = list.children.length + 1;
+  const div  = document.createElement('div');
+  div.className = 'set-row';
+  div.dataset.setid = id;
+  div.innerHTML = `
+    <div class="set-num">${num}</div>
+    <input class="set-input" id="sw_${id}" type="number" step="0.5" min="0" placeholder="kg" value="${weight}">
+    <input class="set-input" id="sr_${id}" type="number" min="0" placeholder="reps" value="${reps}">
+    <button class="set-remove" onclick="removeExSet(this)">✕</button>
+  `;
+  list.appendChild(div);
+  renumberSets();
+}
+
+function removeExSet(btn) {
+  btn.closest('.set-row').remove();
+  renumberSets();
+}
+
+function renumberSets() {
+  document.querySelectorAll('#exLogSets .set-row').forEach((row, i) => {
+    row.querySelector('.set-num').textContent = i + 1;
+  });
+}
+
+async function fetchLastExLog(exName, day) {
+  try {
+    const labels = [
+      'exercise-log', currentPerson, exSlug(exName), 'day-' + day.toLowerCase()
+    ].map(encodeURIComponent).join(',');
+    const res = await ghFetch(
+      `/repos/${ghRepo()}/issues?labels=${labels}&state=open&per_page=1&sort=created&direction=desc`
+    );
+    if (!res.ok) return null;
+    const issues = await res.json();
+    if (!issues.length) return null;
+    const issue = issues[0];
+    return {
+      date: new Date(issue.created_at).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' }),
+      sets: parseExSets(issue.body),
+    };
+  } catch { return null; }
+}
+
+function parseExSets(body) {
+  const sets = [];
+  let inTable = false;
+  for (const line of (body || '').split('\n')) {
+    if (/\|\s*Set\s*\|/i.test(line)) { inTable = true; continue; }
+    if (inTable && /\|[-: ]+\|/.test(line)) continue;
+    if (inTable && line.trim().startsWith('|')) {
+      const cols = line.split('|').map(c => c.trim()).filter(Boolean);
+      if (cols.length >= 3) sets.push({ weight: cols[1].replace(/\s*kg/i,''), reps: cols[2] });
+    } else if (inTable) break;
+  }
+  return sets;
+}
+
+async function submitExLog() {
+  const btn = document.getElementById('exLogSubmitBtn');
+  const msg = document.getElementById('exLogMsg');
+  btn.disabled = true;
+  msg.textContent = 'Saving…';
+  msg.style.color = 'var(--text-dim)';
+
+  const ex      = _exLogEx;
+  const day     = _exLogDay;
+  const wk      = WEEKS[currentWeek - 1];
+  const profile = PROFILES[currentPerson];
+  const session = SESSIONS[WEEK_PLAN[day].session];
+  const dateStr = dayPillDate(currentWeek, DAYS_LIST.indexOf(day));
+  const notes   = document.getElementById('exLogNotes').value.trim();
+
+  // Collect sets
+  const setRows = document.querySelectorAll('#exLogSets .set-row');
+  const sets = [];
+  setRows.forEach((row, i) => {
+    const id = row.dataset.setid;
+    const w  = document.getElementById(`sw_${id}`)?.value?.trim() || '';
+    const r  = document.getElementById(`sr_${id}`)?.value?.trim() || '';
+    if (w || r) sets.push({ num: i+1, weight: w || '—', reps: r || '—' });
+  });
+
+  let body = `## Exercise Log: ${ex.name}\n\n`;
+  body += `| | |\n|---|---|\n`;
+  body += `| **Person** | ${profile.name} |\n`;
+  body += `| **Date** | ${dateStr} |\n`;
+  body += `| **Week** | ${wk.w} of 16 (${wk.focus}) |\n`;
+  body += `| **Session** | ${session.title} |\n`;
+  body += `| **Planned** | ${ex.sets}${ex.rpe !== '—' ? ` · RPE ${ex.rpe}` : ''} |\n\n`;
+  body += `## Sets\n\n| Set | Weight (kg) | Reps |\n|---|---|---|\n`;
+  sets.forEach(s => { body += `| ${s.num} | ${s.weight} | ${s.reps} |\n`; });
+  if (notes) body += `\n## Notes\n\n${notes}\n`;
+
+  const title = `[${dateStr}] ${profile.name} — ${ex.name} (Week ${wk.w})`;
+  const labels = ['exercise-log', currentPerson, exSlug(ex.name), 'day-' + day.toLowerCase(), `week-${wk.w}`];
+
+  try {
+    const res = await ghFetch(`/repos/${ghRepo()}/issues`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, body, labels }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      msg.style.color = 'var(--accent3)';
+      msg.innerHTML = `✓ Saved! <a href="${data.html_url}" target="_blank" style="color:var(--accent)">Issue #${data.number}</a>`;
+      btn.textContent = '✓ Saved';
+    } else {
+      const err = await res.json();
+      msg.style.color = 'var(--accent2)';
+      msg.textContent = `✗ ${err.message || res.statusText}`;
+      btn.disabled = false;
+    }
+  } catch(e) {
+    msg.style.color = 'var(--accent2)';
+    msg.textContent = '✗ Network error';
+    btn.disabled = false;
+  }
+}
 
 // ─── GITHUB CONFIG ────────────────────────────────────────────────────────────
 function ghRepo() { return localStorage.getItem('gh_repo') || 'ayushggoyal/workout-plan'; }
